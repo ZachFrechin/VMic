@@ -13,7 +13,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet restore Vmic.slnx
+      # Publish uses --no-restore and targets win-x64, so the assets file must
+      # be restored for that runtime identifier rather than only the portable TFM.
+      - run: dotnet restore Vmic.slnx --runtime win-x64
       - run: dotnet test Vmic.slnx --no-restore --configuration Release --disable-build-servers -m:1
       - run: >-
           dotnet publish src/Vmic.App/Vmic.App.csproj --no-restore --configuration Release
