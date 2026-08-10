@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Representative WDK driver project for the patched SYSVAD ("Vmic Bridge").
+
+  NOTE: The lowest-friction path is to open the SYSVAD solution that ships with
+  the Windows-driver-samples (audio/sysvad), apply the VMIC_PATCHES.md edits,
+  add vmic_bridge.cpp/.h to that existing project, rename the output to
+  VmicBridge, and build. This file is provided as a standalone starting point;
+  WDK project GUIDs/targets vary by WDK release, so expect to reconcile it with
+  your installed WDK (or just use SYSVAD's own project).
+-->
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8A1F6B2C-9D4E-4A5B-9C7D-1E2F3A4B5C6D}</ProjectGuid>
+    <RootNamespace>VmicBridge</RootNamespace>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Driver</ConfigurationType>
+    <DriverType>WDM</DriverType>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <PropertyGroup>
+    <TargetName>VmicBridge</TargetName>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_KERNEL_MODE;KMDF_VERSION_MAJOR=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies);portcls.lib;libcntpr.lib;stdunk.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <!-- Patched SYSVAD sources + the Vmic bridge module. Adjust this list to the
+         files you actually bring over from the SYSVAD sample. -->
+    <ClCompile Include="src\vmic_bridge.cpp" />
+    <ClCompile Include="src\adapter.cpp" />
+    <ClCompile Include="src\basetopo.cpp" />
+    <ClCompile Include="src\common.cpp" />
+    <ClCompile Include="src\kshelper.cpp" />
+    <ClCompile Include="src\minwavert.cpp" />
+    <ClCompile Include="src\minwavertstream.cpp" />
+    <ClCompile Include="src\mintopo.cpp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="src\vmic_bridge.h" />
+    <ClInclude Include="src\sysvad.h" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Inf Include="VmicBridge.inf" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

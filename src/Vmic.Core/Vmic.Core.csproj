@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Platform-neutral core: wire protocol, audio DSP, transports, session logic.
+    Deliberately references NO NAudio and NO Windows-only APIs so it can be
+    unit-tested on any OS (including the macOS dev box).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Vmic.Core</RootNamespace>
+    <AssemblyName>Vmic.Core</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,253 @@
+<Window x:Class="Vmic.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Vmic.App.Controls"
+        Title="Vmic"
+        Width="600" Height="720"
+        MinWidth="520" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource App.Background}"
+        FontFamily="Segoe UI">
+    <Grid>
+
+        <!-- =========================== Role picker =========================== -->
+        <Grid Visibility="{Binding ShowPicker, Converter={StaticResource BoolToVis}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="440">
+                <TextBlock Text="Vmic" FontSize="34" FontWeight="Bold"
+                           Foreground="{StaticResource App.Foreground}" HorizontalAlignment="Center" />
+                <TextBlock Text="Two computers, one combined virtual microphone."
+                           Style="{StaticResource HintText}" HorizontalAlignment="Center" Margin="0,6,0,28" />
+
+                <Button Command="{Binding ChooseHostCommand}" Margin="0,0,0,14" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{StaticResource App.Card}"
+                                    BorderBrush="{StaticResource App.Border}" BorderThickness="1"
+                                    CornerRadius="12" Padding="20">
+                                <StackPanel>
+                                    <TextBlock Text="🎙  Host" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="{StaticResource App.Foreground}" />
+                                    <TextBlock Text="Mix your mic with a remote mic and publish one virtual microphone."
+                                               Style="{StaticResource HintText}" Margin="0,6,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource App.Accent}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button Command="{Binding ChooseClientCommand}" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{StaticResource App.Card}"
+                                    BorderBrush="{StaticResource App.Border}" BorderThickness="1"
+                                    CornerRadius="12" Padding="20">
+                                <StackPanel>
+                                    <TextBlock Text="💻  Client" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="{StaticResource App.Foreground}" />
+                                    <TextBlock Text="Send your microphone to a host on this network."
+                                               Style="{StaticResource HintText}" Margin="0,6,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource App.Accent}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- ============================ Host view ============================ -->
+        <Grid Visibility="{Binding ShowHost, Converter={StaticResource BoolToVis}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24">
+                    <Grid Margin="0,0,0,16">
+                        <Button Content="← Back" Style="{StaticResource GhostButton}"
+                                Command="{Binding BackCommand}" HorizontalAlignment="Left" />
+                        <TextBlock Text="Host" FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{StaticResource App.Foreground}" HorizontalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Firewall hint -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12"
+                            Visibility="{Binding ShowFirewallHint, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="Windows Firewall must allow Vmic so clients can find and reach you."
+                                       Style="{StaticResource HintText}" />
+                            <Button Content="Allow Vmic through Firewall" Style="{StaticResource GhostButton}"
+                                    Command="{Binding AddFirewallRuleCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Devices -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="AUDIO" Style="{StaticResource SectionTitle}" />
+                            <TextBlock Text="Your microphone" Style="{StaticResource HintText}" />
+                            <ComboBox ItemsSource="{Binding CaptureDevices}"
+                                      SelectedItem="{Binding SelectedCaptureDevice}"
+                                      DisplayMemberPath="Name" Margin="0,4,0,12" />
+                            <TextBlock Text="Send the combined mix to" Style="{StaticResource HintText}" />
+                            <ComboBox ItemsSource="{Binding RenderDevices}"
+                                      SelectedItem="{Binding SelectedRenderDevice}"
+                                      DisplayMemberPath="Name" Margin="0,4,0,0" />
+                            <TextBlock Style="{StaticResource WarnText}" Margin="0,10,0,0"
+                                       Visibility="{Binding ShowSpeakerWarning, Converter={StaticResource BoolToVis}}"
+                                       Text="⚠ This output looks like real speakers — the remote voice will play out loud and may feed back into your mic. Choose a virtual cable (e.g. Vmic Bridge) instead." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Levels -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="LEVELS" Style="{StaticResource SectionTitle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="You" Foreground="{StaticResource App.Foreground}" VerticalAlignment="Center" />
+                                <controls:LevelMeterControl Grid.Column="1" Level="{Binding LocalLevel}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Remote" Foreground="{StaticResource App.Foreground}" VerticalAlignment="Center" />
+                                <controls:LevelMeterControl Grid.Column="1" Level="{Binding RemoteLevel}" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Mix -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="MIX" Style="{StaticResource SectionTitle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="You" Foreground="{StaticResource App.Foreground}" VerticalAlignment="Center" />
+                                <Slider Grid.Column="1" Minimum="0" Maximum="2" Value="{Binding HostMicGain}" Margin="8,0" />
+                                <CheckBox Grid.Column="2" Content="Mute" IsChecked="{Binding HostMicMuted}"
+                                          Foreground="{StaticResource App.Foreground}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Remote" Foreground="{StaticResource App.Foreground}" VerticalAlignment="Center" />
+                                <Slider Grid.Column="1" Minimum="0" Maximum="2" Value="{Binding RemoteGain}" Margin="8,0" />
+                                <CheckBox Grid.Column="2" Content="Mute" IsChecked="{Binding RemoteMuted}"
+                                          Foreground="{StaticResource App.Foreground}" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Clients -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="CONNECTED CLIENTS" Style="{StaticResource SectionTitle}" />
+                            <ItemsControl ItemsSource="{Binding ConnectedClients}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource App.Foreground}"
+                                                       VerticalAlignment="Center" />
+                                            <Button Content="Disconnect" Style="{StaticResource GhostButton}" Padding="10,4"
+                                                    HorizontalAlignment="Right"
+                                                    Command="{Binding DataContext.DisconnectClientCommand,
+                                                              RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding SessionId}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Actions + status -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <Button Content="Start hosting" Style="{StaticResource PrimaryButton}" Command="{Binding StartCommand}" />
+                        <Button Content="Stop" Style="{StaticResource GhostButton}" Command="{Binding StopCommand}" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource HintText}" Margin="0,12,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ============================ Client view ========================== -->
+        <Grid Visibility="{Binding ShowClient, Converter={StaticResource BoolToVis}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24">
+                    <Grid Margin="0,0,0,16">
+                        <Button Content="← Back" Style="{StaticResource GhostButton}"
+                                Command="{Binding BackCommand}" HorizontalAlignment="Left" />
+                        <TextBlock Text="Client" FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{StaticResource App.Foreground}" HorizontalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Mic -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="YOUR MICROPHONE" Style="{StaticResource SectionTitle}" />
+                            <ComboBox ItemsSource="{Binding CaptureDevices}"
+                                      SelectedItem="{Binding SelectedCaptureDevice}"
+                                      DisplayMemberPath="Name" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Host selection -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="FIND A HOST" Style="{StaticResource SectionTitle}" />
+                            <ListBox ItemsSource="{Binding DiscoveredHosts}"
+                                     SelectedItem="{Binding SelectedHost}"
+                                     Height="120"
+                                     Background="{StaticResource App.Card}"
+                                     Foreground="{StaticResource App.Foreground}"
+                                     BorderBrush="{StaticResource App.Border}">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Foreground" Value="{StaticResource App.Foreground}" />
+                                        <Setter Property="Padding" Value="8,6" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                            <TextBlock Text="…or type the host's IP address" Style="{StaticResource HintText}" Margin="0,10,0,4" />
+                            <TextBox Text="{Binding ManualHostIp, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Level -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="INPUT LEVEL" Style="{StaticResource SectionTitle}" />
+                            <controls:LevelMeterControl Level="{Binding InputLevel}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Actions + status -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <Button Content="Connect" Style="{StaticResource PrimaryButton}" Command="{Binding ConnectCommand}" />
+                        <Button Content="Disconnect" Style="{StaticResource GhostButton}" Command="{Binding DisconnectCommand}" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource HintText}" Margin="0,12,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+    </Grid>
+</Window>

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WPF desktop app (Host + Client in one executable).
+    Targets Windows only, but EnableWindowsTargeting lets it COMPILE on the
+    macOS dev box (it cannot RUN there). NAudio provides WASAPI capture/playback.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Vmic.App</RootNamespace>
+    <AssemblyName>Vmic</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vmic.Core\Vmic.Core.csproj" />
+  </ItemGroup>
+
+</Project>

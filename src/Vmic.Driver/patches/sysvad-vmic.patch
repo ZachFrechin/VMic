@@ -1,0 +1,92 @@
+diff --git a/audio/sysvad/EndpointsCommon/EndpointsCommon.vcxproj b/audio/sysvad/EndpointsCommon/EndpointsCommon.vcxproj
+index c1ba8b1..a813646 100644
+--- a/audio/sysvad/EndpointsCommon/EndpointsCommon.vcxproj
++++ b/audio/sysvad/EndpointsCommon/EndpointsCommon.vcxproj
+@@ -188,6 +188,7 @@
+     <ClCompile Include="minwavert.cpp" />
+     <ClCompile Include="minwavertstream.cpp" />
+     <ClCompile Include="NewDelete.cpp" />
++    <ClCompile Include="vmic_bridge.cpp" />
+     <ClCompile Include="speakerhptopo.cpp" />
+     <ClCompile Include="speakertopo.cpp" />
+     <ClCompile Include="usbhsminwavert.cpp" />
+diff --git a/audio/sysvad/EndpointsCommon/minwavertstream.cpp b/audio/sysvad/EndpointsCommon/minwavertstream.cpp
+index adea0c8..70ec330 100644
+--- a/audio/sysvad/EndpointsCommon/minwavertstream.cpp
++++ b/audio/sysvad/EndpointsCommon/minwavertstream.cpp
+@@ -432,10 +432,17 @@ Return Value:
+         }
+     }
+ 
+-    //
+-    // Register this stream.
+-    //
+-    ntStatus = m_pMiniport->StreamCreated(m_ulPin, this);
++   //
++   // Register this stream.
++   //
++    // Initialize the shared bridge before audio processing starts.
++    ntStatus = VmicBridgeInit(&g_VmicBridge, VMIC_BRIDGE_DEFAULT_SIZE);
++    if (!NT_SUCCESS(ntStatus))
++    {
++        return ntStatus;
++    }
++
++   ntStatus = m_pMiniport->StreamCreated(m_ulPin, this);
+     if (NT_SUCCESS(ntStatus))
+     {
+         m_bUnregisterStream = TRUE;
+@@ -1516,7 +1523,7 @@ ByteDisplacement - # of bytes to process.
+     while (ByteDisplacement > 0)
+     {
+         ULONG runWrite = min(ByteDisplacement, m_ulDmaBufferSize - bufferOffset);
+-            m_ToneGenerator.GenerateSine(m_pDmaBuffer + bufferOffset, runWrite);
++        VmicBridgeRead(&g_VmicBridge, m_pDmaBuffer + bufferOffset, runWrite);
+         bufferOffset = (bufferOffset + runWrite) % m_ulDmaBufferSize;
+         ByteDisplacement -= runWrite;
+     }
+@@ -1547,7 +1554,7 @@ ByteDisplacement - # of bytes to process.
+     while (ByteDisplacement > 0)
+     {
+         ULONG runWrite = min(ByteDisplacement, m_ulDmaBufferSize - bufferOffset);
+-        m_SaveData.WriteData(m_pDmaBuffer + bufferOffset, runWrite);
++        VmicBridgeWrite(&g_VmicBridge, m_pDmaBuffer + bufferOffset, runWrite);
+         bufferOffset = (bufferOffset + runWrite) % m_ulDmaBufferSize;
+         ByteDisplacement -= runWrite;
+     }
+diff --git a/audio/sysvad/EndpointsCommon/minwavertstream.h b/audio/sysvad/EndpointsCommon/minwavertstream.h
+index 4e9e882..49cb174 100644
+--- a/audio/sysvad/EndpointsCommon/minwavertstream.h
++++ b/audio/sysvad/EndpointsCommon/minwavertstream.h
+@@ -17,6 +17,7 @@ Abstract:
+ 
+ #include "savedata.h"
+ #include "tonegenerator.h"
++#include "vmic_bridge.h"
+ 
+ 
+ //
+diff --git a/audio/sysvad/TabletAudioSample/minipairs.h b/audio/sysvad/TabletAudioSample/minipairs.h
+index 0d00f5a..4ec4f8e 100644
+--- a/audio/sysvad/TabletAudioSample/minipairs.h
++++ b/audio/sysvad/TabletAudioSample/minipairs.h
+@@ -510,9 +510,6 @@ static
+ PENDPOINT_MINIPAIR  g_RenderEndpoints[] = 
+ {
+     &SpeakerMiniports,
+-    &SpeakerHpMiniports,
+-    &HdmiMiniports,
+-    &SpdifMiniports,
+ };
+ 
+ #define g_cRenderEndpoints  (SIZEOF_ARRAY(g_RenderEndpoints))
+@@ -525,9 +522,6 @@ static
+ PENDPOINT_MINIPAIR  g_CaptureEndpoints[] = 
+ {
+     &MicInMiniports,
+-    &MicArray1Miniports,
+-    &MicArray2Miniports,
+-    &MicArray3Miniports,
+ };
+ 
+ #define g_cCaptureEndpoints (SIZEOF_ARRAY(g_CaptureEndpoints))

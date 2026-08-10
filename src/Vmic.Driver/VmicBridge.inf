@@ -1,0 +1,64 @@
+;
+; VmicBridge.inf — root-enumerated virtual audio device (SYSVAD-derived).
+; Modeled on the SYSVAD sample's INF. Installs the "Vmic Bridge" render + capture
+; endpoints. Build the matching VmicBridge.sys from the patched SYSVAD sources.
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = MEDIA
+ClassGuid   = {4d36e96c-e325-11ce-bfc1-08002be10318}
+Provider    = %ProviderName%
+CatalogFile = VmicBridge.cat
+DriverVer   = 08/10/2026,1.0.0.0
+PnpLockdown = 1
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+VmicBridge.sys = 1,,
+
+[DestinationDirs]
+DefaultDestDir   = 12        ; %SystemRoot%\System32\drivers
+VmicBridge.CopyFiles = 12
+
+[Manufacturer]
+%ManufacturerName% = Standard, NTamd64
+
+[Standard.NTamd64]
+%VmicBridge.DeviceName% = VmicBridge.Install, root\vmicbridge
+
+; ---------------------------------------------------------------- Install
+[VmicBridge.Install.NT]
+Include   = ks.inf, wdmaudio.inf
+Needs     = KS.Registration, WDMAUDIO.Registration, msvad.Registration
+CopyFiles = VmicBridge.CopyFiles
+AddReg    = VmicBridge.AddReg
+
+[VmicBridge.CopyFiles]
+VmicBridge.sys
+
+[VmicBridge.AddReg]
+HKR,,FriendlyName,,%VmicBridge.DeviceName%
+
+; ---------------------------------------------------------------- Services
+[VmicBridge.Install.NT.Services]
+Include = ks.inf, wdmaudio.inf
+Needs   = KS.Registration.Services, WDMAUDIO.Registration.Services, msvad.Registration.Services
+AddService = VmicBridge, 0x00000002, VmicBridge.ServiceInstall
+
+[VmicBridge.ServiceInstall]
+DisplayName    = %VmicBridge.SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\VmicBridge.sys
+
+; ---------------------------------------------------------------- Strings
+[Strings]
+ProviderName        = "Vmic"
+ManufacturerName    = "Vmic"
+DiskId1             = "Vmic Bridge Installation Disk"
+VmicBridge.DeviceName = "Vmic Bridge"
+VmicBridge.SvcDesc  = "Vmic Bridge Virtual Audio Device"

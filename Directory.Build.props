@@ -1,0 +1,17 @@
+<Project>
+  <!--
+    Shared build properties for every project in the solution.
+    TargetFramework is set per-project (net10.0 for Core/Tests, net10.0-windows
+    for the WPF App), so it is intentionally NOT set here.
+  -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <Company>Vmic</Company>
+    <Product>Vmic</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>

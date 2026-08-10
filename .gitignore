@@ -1,0 +1,26 @@
+# .NET
+bin/
+obj/
+out/
+*.user
+*.suo
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Build artifacts
+*.dll
+*.exe
+*.pdb
+*.cache
+artifacts/
+.work/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local memory scaffold
+.remember/

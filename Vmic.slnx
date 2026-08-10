@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vmic.App/Vmic.App.csproj" />
+    <Project Path="src/Vmic.Core/Vmic.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Vmic.Core.Tests/Vmic.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Vmic.Diagnostics/Vmic.Diagnostics.csproj" />
+  </Folder>
+</Solution>
