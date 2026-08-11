@@ -27,40 +27,44 @@ function Find-WdkTool([string]$Name) {
         Select-Object -First 1
 }
 
-$devcon = Find-WdkTool "devcon.exe"
-$devgen = Find-WdkTool "devgen.exe"
-if ($devcon) {
-    # Removing a non-existent device returns a non-zero DevCon status, which is
-    # harmless here: the next step creates a fresh root-enumerated device.
-    & $devcon.FullName remove "@ROOT\VmicBridge\*"
+function Get-VmicDevices {
+    @(Get-CimInstance -ClassName Win32_PnPEntity | Where-Object {
+        $_.HardwareID -contains "Root\VmicBridge"
+    })
 }
 
-if ($devgen) {
-    # Microsoft recommends DevGen + PnPUtil over DevCon install. DevCon's
-    # combined create/update operation can leave a created device behind when
-    # its update phase fails, as it did for the original installer flow.
+$devgen = Find-WdkTool "devgen.exe"
+$vmicDevices = Get-VmicDevices
+
+if ($vmicDevices.Count -eq 0) {
+    if (-not $devgen) { throw "DevGen x64 was not found. Install the Windows Driver Kit." }
+
+    # Microsoft recommends DevGen + PnPUtil over DevCon install. Create the
+    # root device once, then let PnPUtil install or update its package.
     & $devgen.FullName /add /bus ROOT /hardwareid "Root\VmicBridge"
     if ($LASTEXITCODE -ne 0) { throw "DevGen could not create the root-enumerated Vmic Bridge device." }
-
-    pnputil /add-driver $inf /install
-    $pnputilExitCode = $LASTEXITCODE
-    if ($pnputilExitCode -eq 3010) {
-        Write-Warning "Vmic Bridge was installed successfully and Windows must be restarted to finish installation."
-    }
-    elseif ($pnputilExitCode -eq 1641) {
-        Write-Host "Vmic Bridge was installed successfully and Windows is restarting."
-        exit 1641
-    }
-    elseif ($pnputilExitCode -ne 0) {
-        throw "PnPUtil could not install the Vmic Bridge driver package (exit code $pnputilExitCode). Check %windir%\inf\setupapi.dev.log."
-    }
+    $vmicDevices = Get-VmicDevices
 }
-else {
-    if (-not $devcon) { throw "DevGen or DevCon x64 was not found. Install the Windows Driver Kit." }
 
-    Write-Warning "DevGen x64 was not found; falling back to DevCon install."
-    & $devcon.FullName install $inf "Root\VmicBridge"
-    if ($LASTEXITCODE -ne 0) { throw "DevCon could not create and install the root-enumerated Vmic Bridge device." }
+if ($vmicDevices.Count -eq 0) { throw "Vmic Bridge device was not found after DevGen completed." }
+if ($vmicDevices.Count -gt 1) {
+    Write-Warning "Found $($vmicDevices.Count) Vmic Bridge devices from prior installs. Run Uninstall-Driver.ps1 once to remove duplicates, then install again."
+}
+
+pnputil /add-driver $inf /install
+$pnputilExitCode = $LASTEXITCODE
+if ($pnputilExitCode -eq 3010) {
+    Write-Warning "Vmic Bridge was installed successfully and Windows must be restarted to finish installation."
+}
+elseif ($pnputilExitCode -eq 1641) {
+    Write-Host "Vmic Bridge was installed successfully and Windows is restarting."
+    exit 1641
+}
+elseif ($pnputilExitCode -eq 259) {
+    Write-Host "Vmic Bridge is already using the current driver package; no update was needed."
+}
+elseif ($pnputilExitCode -ne 0) {
+    throw "PnPUtil could not install the Vmic Bridge driver package (exit code $pnputilExitCode). Check %windir%\inf\setupapi.dev.log."
 }
 
 Write-Host "Vmic Bridge installed. Run artifacts/diagnostics/Vmic.Diagnostics.exe bridge to verify render-to-capture."
