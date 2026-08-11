@@ -48,7 +48,14 @@ function Update-VmicInfTemplates {
     foreach ($name in @("ComponentizedAudioSample.inx", "ComponentizedAudioSampleExtension.inx", "ComponentizedApoSample.inx")) {
         $inf = Join-Path $templateDir $name
         $text = [System.IO.File]::ReadAllText($inf, $utf16)
-        $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$.10.0...17763')
+        if ($text.Contains('NT$ARCH$.10.0...22621')) {
+            $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$.10.0...17763')
+        }
+        elseif ($text.Contains('NT$ARCH$')) {
+            # Upgrade worktrees prepared by the earlier generic-decoration
+            # version of this script without requiring a manual reset.
+            $text = $text.Replace('NT$ARCH$', 'NT$ARCH$.10.0...17763')
+        }
 
         if ($name -eq "ComponentizedAudioSample.inx") {
             $text = $text.Replace('Root\sysvad_ComponentizedAudioSample', 'Root\VmicBridge')
