@@ -40,15 +40,19 @@ function Sync-VmicBridgeSources {
 function Update-VmicInfTemplates {
     param([string]$SysvadRoot)
 
-    # The current upstream componentized sample restricts its models to Windows
-    # 11 build 22621 and newer. VMic supports Windows 10 1809 (build 17763) and
-    # newer, which is also the minimum version required by its APO INF syntax.
+    # Keep the generated package explicitly limited to Windows 10 1809 and
+    # newer. The pinned pre-Windows-11 SYSVAD revision uses undecorated model
+    # sections; previously prepared worktrees may contain the newer 22621 floor.
     $templateDir = Join-Path $SysvadRoot "TabletAudioSample"
     $utf16 = [System.Text.Encoding]::Unicode
     foreach ($name in @("ComponentizedAudioSample.inx", "ComponentizedAudioSampleExtension.inx", "ComponentizedApoSample.inx")) {
         $inf = Join-Path $templateDir $name
         $text = [System.IO.File]::ReadAllText($inf, $utf16)
-        if ($text.Contains('NT$ARCH$.10.0...22621')) {
+        if ($text.Contains('NT$ARCH$.10.0...17763')) {
+            # Already prepared. Keep this branch first because the target
+            # decoration itself also contains the generic NT$ARCH$ substring.
+        }
+        elseif ($text.Contains('NT$ARCH$.10.0...22621')) {
             $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$.10.0...17763')
         }
         elseif ($text.Contains('NT$ARCH$')) {
@@ -74,6 +78,7 @@ function Update-VmicInfTemplates {
 $preparedMarker = Join-Path $Worktree ".vmic-prepared-$revision"
 if (Test-Path $Worktree) {
     $current = (git -C $Worktree rev-parse HEAD 2>$null).Trim()
+    $ownedMarkers = @(Get-ChildItem $Worktree -Filter ".vmic-prepared-*" -File -ErrorAction SilentlyContinue)
     if ($current -eq $revision -and (Test-Path $preparedMarker) -and -not $Force) {
         Sync-VmicBridgeSources $sysvad
         Update-VmicInfTemplates $sysvad
@@ -88,7 +93,13 @@ if (Test-Path $Worktree) {
         git -C $Worktree clean -fd
     }
     elseif (-not $Force) {
-        throw "$Worktree already exists but is not the expected revision. Re-run with -Force after checking it."
+        if ($ownedMarkers.Count -gt 0) {
+            Write-Host "Replacing the generated SYSVAD worktree because the pinned revision changed."
+            Remove-Item -Recurse -Force $Worktree
+        }
+        else {
+            throw "$Worktree already exists but is not the expected revision. Re-run with -Force after checking it."
+        }
     }
     else {
         Remove-Item -Recurse -Force $Worktree

@@ -4,9 +4,10 @@ Vmic targets Windows 10 version 1809 (build 17763) and later, plus Windows 11,
 on x64 machines. The graphical app and
 the diagnostic utility are self-contained after publication; only driver
 development needs Visual Studio, the Windows SDK, and the Windows Driver Kit.
-The preparation script converts the upstream SYSVAD model decorations from
-Windows 11 build 22621+ to Windows 10 build 17763+ before building, so the
-generated test driver can be selected on supported Windows 10 systems too.
+The preparation script uses a pinned pre-Windows-11 SYSVAD revision and emits
+model decorations for Windows 10 build 17763+. This avoids importing newer
+kernel APIs from a Windows 11-oriented SYSVAD binary. When that pinned revision
+changes, the generated `.work` checkout is refreshed automatically.
 
 ## One-time prerequisites
 
@@ -68,3 +69,7 @@ Microphone as its microphone.
 - Failed bridge diagnostic: open Sound settings and confirm both Vmic Bridge
   endpoints are active; send the result and the generated logs before changing
   the driver sources.
+- Device Manager code 39: the driver binary could not be loaded. Confirm that
+  the repository uses the pinned Windows 10 SYSVAD revision, rebuild the driver,
+  and reinstall it; the installer includes the detailed PnP problem status in
+  its error message.

@@ -5,6 +5,11 @@ kernel driver. The pinned source revision is stored in
 src/Vmic.Driver/SYSVAD_VERSION; the reproducible change is
 src/Vmic.Driver/patches/sysvad-vmic.patch.
 
+The pinned revision is the final SYSVAD update before Microsoft's Windows
+10 build 22000 work. Newer SYSVAD sources import kernel APIs such as
+`ExAllocatePool2` and ship with Windows 11 model decorations, so merely lowering
+their INF version floor can produce Device Manager code 39 on Windows 10.
+
 The preparation script clones that exact revision, initializes WIL, copies the
 Vmic ring-buffer sources into EndpointsCommon, applies the patch, and changes
 the componentized INF to expose:
@@ -12,6 +17,9 @@ the componentized INF to expose:
 - Vmic Bridge Input — the render endpoint selected by VMic Host.
 - Vmic Bridge Microphone — the capture endpoint selected in Zoom, OBS, or
   Discord.
+
+When the pinned revision changes, the script replaces only its own generated
+`.work/windows-driver-samples` checkout. No manual worktree deletion is needed.
 
 The patch limits SYSVAD to one render and one capture endpoint. Render DMA is
 written to the shared non-paged ring; capture DMA reads the same ring and emits

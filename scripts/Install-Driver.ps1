@@ -103,8 +103,23 @@ if ($LASTEXITCODE -ne 0) {
 $vmicDevices = Get-VmicDevices
 $problemDevices = @($vmicDevices | Where-Object { $_.ConfigManagerErrorCode -ne 0 })
 if ($problemDevices.Count -gt 0) {
-    $problemCodes = ($problemDevices | ForEach-Object { $_.ConfigManagerErrorCode }) -join ", "
-    throw "Vmic Bridge is present but Windows reports a PnP problem (code $problemCodes). Check %windir%\inf\setupapi.dev.log."
+    $problemDetails = @($problemDevices | ForEach-Object {
+        $problemStatus = "unavailable"
+        try {
+            $statusProperty = Get-PnpDeviceProperty -InstanceId $_.PNPDeviceID `
+                -KeyName "DEVPKEY_Device_ProblemStatus" -ErrorAction Stop
+            $problemStatus = $statusProperty.Data
+        }
+        catch {
+            # The PnpDevice module is present on supported Windows 10 builds,
+            # but retain the standard PnP code if the detailed property cannot
+            # be queried for any reason.
+        }
+
+        "$($_.PNPDeviceID): code $($_.ConfigManagerErrorCode), status $problemStatus"
+    }) -join "; "
+    $osVersion = [Environment]::OSVersion.Version
+    throw "Vmic Bridge failed to start on Windows $osVersion ($problemDetails). Check %windir%\inf\setupapi.dev.log."
 }
 
 $driverService = Get-CimInstance -ClassName Win32_SystemDriver `
