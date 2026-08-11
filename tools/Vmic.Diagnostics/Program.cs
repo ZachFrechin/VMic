@@ -85,6 +85,8 @@ internal static class Program
         if (render is null || capture is null)
         {
             Console.Error.WriteLine("[bridge] FAIL: Vmic Bridge render and capture endpoints must both be installed.");
+            PrintActiveEndpoints(enumerator, DataFlow.Render, "render");
+            PrintActiveEndpoints(enumerator, DataFlow.Capture, "capture");
             return false;
         }
 
@@ -121,6 +123,16 @@ internal static class Program
             ? $"[bridge] PASS (captured peak {peak:F3})"
             : $"[bridge] FAIL (captured peak {peak:F3}; expected >= 0.020)");
         return passed;
+    }
+
+    private static void PrintActiveEndpoints(MMDeviceEnumerator enumerator, DataFlow flow, string label)
+    {
+        var endpoints = enumerator.EnumerateAudioEndPoints(flow, DeviceState.Active);
+        Console.Error.WriteLine($"[bridge] Active {label} endpoints ({endpoints.Count}):");
+        foreach (var endpoint in endpoints)
+        {
+            Console.Error.WriteLine($"[bridge]   {endpoint.FriendlyName}");
+        }
     }
 
     private static float[] Constant(float value) => Enumerable.Repeat(value, Constants.SamplesPerFrame).ToArray();
