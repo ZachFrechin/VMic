@@ -10,6 +10,15 @@ $artifacts = Join-Path $repoRoot "artifacts"
 $appOut = Join-Path $artifacts "app"
 $diagOut = Join-Path $artifacts "diagnostics"
 
+$dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
+if (-not $dotnet) {
+    throw ".NET SDK 10 is required. Install it with: winget install Microsoft.DotNet.SDK.10 --source winget"
+}
+$sdkVersion = (& dotnet --version).Trim()
+if ($LASTEXITCODE -ne 0 -or [int]($sdkVersion.Split('.')[0]) -lt 10) {
+    throw ".NET SDK 10 or newer is required (current SDK: $sdkVersion). Install it with: winget install Microsoft.DotNet.SDK.10 --source winget"
+}
+
 dotnet test (Join-Path $repoRoot "Vmic.slnx") --configuration $Configuration --disable-build-servers -m:1
 if ($LASTEXITCODE -ne 0) { throw "Tests failed; publication aborted." }
 
