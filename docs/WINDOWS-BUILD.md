@@ -43,6 +43,11 @@ driver; disable it afterwards with bcdedit /set TESTSIGNING OFF and reboot.
 ./artifacts/diagnostics/Vmic.Diagnostics.exe all
 ~~~
 
+`Install-Driver.ps1` installs the generated base, extension, and APO INF files;
+do not install only `ComponentizedAudioSample.inf` manually. The script also
+checks that Windows registered the SYSVAD driver service before reporting
+success.
+
 The final command must report a passing network test and a passing bridge test.
 Then launch artifacts/app/Vmic.exe, select your real microphone as input and
 Vmic Bridge Input as Host output. Conferencing software must select Vmic Bridge

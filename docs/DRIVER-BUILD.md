@@ -31,6 +31,12 @@ Run the complete build and installation flow from an elevated PowerShell:
 ./artifacts/diagnostics/Vmic.Diagnostics.exe bridge
 ~~~
 
+The installer applies all three componentized SYSVAD packages in order: the
+base audio driver, its device extension, and the APO software component. It
+then verifies both the root device's PnP status and registration of the
+`sysvad_componentizedaudiosample` driver service. A successful script exit
+therefore means more than merely staging an INF in the Windows driver store.
+
 This is a test-signed development driver. It is not suitable for public
 distribution until it has a production driver-signing and compatibility process.
 The SYSVAD code remains subject to Microsoft's license in its upstream

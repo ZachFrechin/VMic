@@ -57,5 +57,17 @@ if (-not $package) { throw "The SYSVAD package was not found after the build." }
 $destination = Join-Path $repoRoot "artifacts/driver/$Configuration-x64"
 New-Item -ItemType Directory -Force $destination | Out-Null
 Copy-Item (Join-Path $package.Directory "*") $destination -Recurse -Force
+
+$requiredInfFiles = @(
+    "ComponentizedAudioSample.inf",
+    "ComponentizedAudioSampleExtension.inf",
+    "ComponentizedApoSample.inf"
+)
+foreach ($requiredInfFile in $requiredInfFiles) {
+    if (-not (Test-Path (Join-Path $destination $requiredInfFile))) {
+        throw "The built SYSVAD package is incomplete: $requiredInfFile was not copied to $destination."
+    }
+}
+
 Write-Host "Driver package copied to $destination"
 Write-Host "Next: run scripts/Install-Driver.ps1 -PackagePath '$destination' as Administrator."

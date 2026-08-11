@@ -17,8 +17,26 @@ if ($EnableTestSigning) {
     exit 3010
 }
 
-$inf = Join-Path $PackagePath "ComponentizedAudioSample.inf"
-if (-not (Test-Path $inf)) { throw "ComponentizedAudioSample.inf not found in $PackagePath" }
+$driverPackages = @(
+    [PSCustomObject]@{
+        Name = "base driver"
+        Path = Join-Path $PackagePath "ComponentizedAudioSample.inf"
+    },
+    [PSCustomObject]@{
+        Name = "device extension"
+        Path = Join-Path $PackagePath "ComponentizedAudioSampleExtension.inf"
+    },
+    [PSCustomObject]@{
+        Name = "APO software component"
+        Path = Join-Path $PackagePath "ComponentizedApoSample.inf"
+    }
+)
+
+foreach ($driverPackage in $driverPackages) {
+    if (-not (Test-Path $driverPackage.Path)) {
+        throw "$($driverPackage.Path) was not found. Rebuild the complete SYSVAD package before installing it."
+    }
+}
 
 function Find-WdkTool([string]$Name) {
     Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\Tools" -Filter $Name -File -Recurse -ErrorAction SilentlyContinue |
@@ -31,6 +49,27 @@ function Get-VmicDevices {
     @(Get-CimInstance -ClassName Win32_PnPEntity | Where-Object {
         $_.HardwareID -contains "Root\VmicBridge"
     })
+}
+
+function Install-DriverPackage([string]$Name, [string]$Path) {
+    Write-Host "Installing Vmic Bridge $Name from $Path"
+    pnputil /add-driver $Path /install
+    $pnputilExitCode = $LASTEXITCODE
+
+    if ($pnputilExitCode -eq 3010) {
+        $script:restartRequired = $true
+        Write-Warning "The Vmic Bridge $Name was installed and Windows must be restarted."
+    }
+    elseif ($pnputilExitCode -eq 1641) {
+        Write-Host "The Vmic Bridge $Name was installed and Windows is restarting."
+        exit 1641
+    }
+    elseif ($pnputilExitCode -eq 259) {
+        Write-Host "PnPUtil reported no change for the Vmic Bridge $Name. Final device checks will confirm whether it is active."
+    }
+    elseif ($pnputilExitCode -ne 0) {
+        throw "PnPUtil could not install the Vmic Bridge $Name (exit code $pnputilExitCode). Check %windir%\inf\setupapi.dev.log."
+    }
 }
 
 $devgen = Find-WdkTool "devgen.exe"
@@ -51,20 +90,32 @@ if ($vmicDevices.Count -gt 1) {
     Write-Warning "Found $($vmicDevices.Count) Vmic Bridge devices from prior installs. Run Uninstall-Driver.ps1 once to remove duplicates, then install again."
 }
 
-pnputil /add-driver $inf /install
-$pnputilExitCode = $LASTEXITCODE
-if ($pnputilExitCode -eq 3010) {
-    Write-Warning "Vmic Bridge was installed successfully and Windows must be restarted to finish installation."
-}
-elseif ($pnputilExitCode -eq 1641) {
-    Write-Host "Vmic Bridge was installed successfully and Windows is restarting."
-    exit 1641
-}
-elseif ($pnputilExitCode -eq 259) {
-    Write-Host "Vmic Bridge is already using the current driver package; no update was needed."
-}
-elseif ($pnputilExitCode -ne 0) {
-    throw "PnPUtil could not install the Vmic Bridge driver package (exit code $pnputilExitCode). Check %windir%\inf\setupapi.dev.log."
+$script:restartRequired = $false
+foreach ($driverPackage in $driverPackages) {
+    Install-DriverPackage -Name $driverPackage.Name -Path $driverPackage.Path
 }
 
-Write-Host "Vmic Bridge installed. Run artifacts/diagnostics/Vmic.Diagnostics.exe bridge to verify render-to-capture."
+pnputil /scan-devices
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "PnPUtil could not rescan devices (exit code $LASTEXITCODE). Windows may need to be restarted before validation."
+}
+
+$vmicDevices = Get-VmicDevices
+$problemDevices = @($vmicDevices | Where-Object { $_.ConfigManagerErrorCode -ne 0 })
+if ($problemDevices.Count -gt 0) {
+    $problemCodes = ($problemDevices | ForEach-Object { $_.ConfigManagerErrorCode }) -join ", "
+    throw "Vmic Bridge is present but Windows reports a PnP problem (code $problemCodes). Check %windir%\inf\setupapi.dev.log."
+}
+
+$driverService = Get-CimInstance -ClassName Win32_SystemDriver `
+    -Filter "Name='sysvad_componentizedaudiosample'" -ErrorAction SilentlyContinue
+if (-not $driverService) {
+    throw "The Vmic Bridge device exists, but the sysvad_componentizedaudiosample driver service was not registered. Check %windir%\inf\setupapi.dev.log."
+}
+
+Write-Host "Vmic Bridge driver service: $($driverService.State)"
+if ($script:restartRequired) {
+    Write-Warning "Restart Windows before running the bridge diagnostic."
+}
+
+Write-Host "All Vmic Bridge driver packages are installed. Run artifacts/diagnostics/Vmic.Diagnostics.exe bridge to verify render-to-capture."
