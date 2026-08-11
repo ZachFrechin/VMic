@@ -11,7 +11,9 @@ changes, the generated `.work` checkout is refreshed automatically.
 The preparation also suppresses only WDK warning C4996 for the pinned
 down-level pool API and applies Microsoft's removal of the obsolete APO
 `EmbedManifest=false` setting, allowing the older source to build with current
-WDK toolchains without changing its Windows runtime requirements.
+WDK toolchains without changing its Windows runtime requirements. The build
+also fixes `_NT_TARGET_VERSION` to `NTDDI_WIN10_RS5` (Windows 10 version 1809),
+so the current WDK cannot select imports from its newest OS contract.
 
 ## One-time prerequisites
 
@@ -73,7 +75,7 @@ Microphone as its microphone.
 - Failed bridge diagnostic: open Sound settings and confirm both Vmic Bridge
   endpoints are active; send the result and the generated logs before changing
   the driver sources.
-- Device Manager code 39: the driver binary could not be loaded. Confirm that
-  the repository uses the pinned Windows 10 SYSVAD revision, rebuild the driver,
-  and reinstall it; the installer includes the detailed PnP problem status in
-  its error message.
+- Device Manager code 39 with status `0xC0000263`: Windows could not resolve a
+  driver import. Confirm that the build prints `_NT_TARGET_VERSION=0x0A000006`,
+  then uninstall, rebuild, and reinstall; the installer includes the detailed
+  PnP problem status in its error message.

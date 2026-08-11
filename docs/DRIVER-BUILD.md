@@ -8,7 +8,9 @@ src/Vmic.Driver/patches/sysvad-vmic.patch.
 The pinned revision is the final SYSVAD update before Microsoft's Windows
 10 build 22000 work. Newer SYSVAD sources import kernel APIs such as
 `ExAllocatePool2` and ship with Windows 11 model decorations, so merely lowering
-their INF version floor can produce Device Manager code 39 on Windows 10.
+their INF version floor can produce Device Manager code 39 on Windows 10. The
+Vmic bridge follows the pinned source by using `ExAllocatePoolWithTag` with a
+non-executable pool, rather than adding that newer import back into the binary.
 
 The preparation script clones that exact revision, initializes WIL, copies the
 Vmic ring-buffer sources into EndpointsCommon, applies the patch, and changes
@@ -30,6 +32,11 @@ toolset's x64/x86 Spectre libraries, ATL, and ATL with Spectre mitigations.
 SYSVAD builds APO projects, so omitting those Visual Studio components produces
 `atlbase.h` or `MSB8040` failures. See [the Windows build runbook](WINDOWS-BUILD.md)
 for the exact component names.
+
+`Build-Driver.ps1` explicitly sets both `TargetVersion=Windows10` and
+`_NT_TARGET_VERSION=0x0A000006` (`NTDDI_WIN10_RS5`). This is the compile-time
+counterpart to the INF's Windows 10 build 17763 floor and prevents a current WDK
+from silently compiling the driver against its newest NTDDI contract.
 
 Run the complete build and installation flow from an elevated PowerShell:
 

@@ -20,8 +20,11 @@ VmicBridgeInit(
 
     KeInitializeSpinLock(&Bridge->Lock);
 
+    // Keep the bridge compatible with the driver's Windows 10 1809 floor.
+    // ExAllocatePool2 was introduced later; the pinned SYSVAD revision uses
+    // the down-level non-executable pool API for the same reason.
     Bridge->Buffer = static_cast<PUCHAR>(
-        ExAllocatePool2(POOL_FLAG_NON_PAGED, BufferSize, VMIC_BRIDGE_POOL_TAG));
+        ExAllocatePoolWithTag(NonPagedPoolNx, BufferSize, VMIC_BRIDGE_POOL_TAG));
     if (Bridge->Buffer == nullptr)
         return STATUS_INSUFFICIENT_RESOURCES;
 
