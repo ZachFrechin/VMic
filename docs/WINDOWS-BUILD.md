@@ -52,6 +52,10 @@ Microphone as its microphone.
   mode, then inspect the build output for the generated catalog/signature.
 - Failed installation: inspect %windir%\\inf\\setupapi.dev.log, then run
   ./scripts/Uninstall-Driver.ps1 before retrying.
+- `InfVerif.dll` missing under `bin\\...\\x86` or `aitstatic` exit code 193:
+  update the repository, then rerun `Build-Driver.ps1`. The script prioritizes
+  64-bit MSBuild, which makes the WDK use its x64 validation tools for the x64
+  driver. It intentionally does not skip INF or API validation.
 - Failed bridge diagnostic: open Sound settings and confirm both Vmic Bridge
   endpoints are active; send the result and the generated logs before changing
   the driver sources.

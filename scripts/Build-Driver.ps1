@@ -16,7 +16,30 @@ $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio/Installer
 if (-not (Test-Path $vswhere)) {
     throw "Visual Studio Build Tools + Windows SDK + WDK are required. See docs/WINDOWS-BUILD.md."
 }
-$msbuild = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+
+function Find-MsBuild([string]$Pattern) {
+    @(& $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find $Pattern) |
+        Where-Object { $_ -and (Test-Path $_) } |
+        Select-Object -First 1
+}
+
+# ApiValidator can validate an x64 SYSVAD binary only when it is launched by
+# the x64 WDK toolchain. Prefer the 64-bit MSBuild host so the WDK resolves
+# InfVerif, ApiValidator, and AitStatic from its x64 directory.
+$msbuild = Find-MsBuild "MSBuild\Current\Bin\amd64\MSBuild.exe"
+if (-not $msbuild) {
+    $msbuild = Find-MsBuild "MSBuild\**\Bin\amd64\MSBuild.exe"
+}
+
+if ($msbuild) {
+    Write-Host "Using 64-bit MSBuild: $msbuild"
+}
+else {
+    $msbuild = Find-MsBuild "MSBuild\**\Bin\MSBuild.exe"
+    if ($msbuild) {
+        Write-Warning "64-bit MSBuild was not found; falling back to x86 MSBuild: $msbuild"
+    }
+}
 if (-not $msbuild) {
     throw "MSBuild was not found. Install the C++ desktop workload and the WDK."
 }
