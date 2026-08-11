@@ -45,7 +45,12 @@ function Update-VmicInfTemplates {
     # sections; previously prepared worktrees may contain the newer 22621 floor.
     $templateDir = Join-Path $SysvadRoot "TabletAudioSample"
     $utf16 = [System.Text.Encoding]::Unicode
-    foreach ($name in @("ComponentizedAudioSample.inx", "ComponentizedAudioSampleExtension.inx", "ComponentizedApoSample.inx")) {
+    foreach ($name in @(
+        "ComponentizedAudioSample.inx",
+        "ComponentizedAudioSampleExtension.inx",
+        "ComponentizedApoSample.inx",
+        "tabletaudiosample.inx"
+    )) {
         $inf = Join-Path $templateDir $name
         $text = [System.IO.File]::ReadAllText($inf, $utf16)
         if ($text.Contains('NT$ARCH$.10.0...17763')) {
