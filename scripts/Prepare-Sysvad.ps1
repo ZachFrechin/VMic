@@ -40,9 +40,10 @@ function Sync-VmicBridgeSources {
 function Update-VmicInfTemplates {
     param([string]$SysvadRoot)
 
-    # Keep the generated package explicitly limited to Windows 10 1809 and
-    # newer. The pinned pre-Windows-11 SYSVAD revision uses undecorated model
-    # sections; previously prepared worktrees may contain the newer 22621 floor.
+    # Keep the generated package explicitly limited to Windows 10 1903 and
+    # newer. This SYSVAD revision uses the SoundDetector2 contract introduced
+    # in 1903. Previously prepared worktrees may contain our older 17763 floor
+    # or the newer upstream 22621 floor.
     $templateDir = Join-Path $SysvadRoot "TabletAudioSample"
     $utf16 = [System.Text.Encoding]::Unicode
     foreach ($name in @(
@@ -53,17 +54,20 @@ function Update-VmicInfTemplates {
     )) {
         $inf = Join-Path $templateDir $name
         $text = [System.IO.File]::ReadAllText($inf, $utf16)
-        if ($text.Contains('NT$ARCH$.10.0...17763')) {
+        if ($text.Contains('NT$ARCH$.10.0...18362')) {
             # Already prepared. Keep this branch first because the target
             # decoration itself also contains the generic NT$ARCH$ substring.
         }
+        elseif ($text.Contains('NT$ARCH$.10.0...17763')) {
+            $text = $text.Replace('NT$ARCH$.10.0...17763', 'NT$ARCH$.10.0...18362')
+        }
         elseif ($text.Contains('NT$ARCH$.10.0...22621')) {
-            $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$.10.0...17763')
+            $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$.10.0...18362')
         }
         elseif ($text.Contains('NT$ARCH$')) {
             # Upgrade worktrees prepared by the earlier generic-decoration
             # version of this script without requiring a manual reset.
-            $text = $text.Replace('NT$ARCH$', 'NT$ARCH$.10.0...17763')
+            $text = $text.Replace('NT$ARCH$', 'NT$ARCH$.10.0...18362')
         }
 
         if ($name -eq "ComponentizedAudioSample.inx") {

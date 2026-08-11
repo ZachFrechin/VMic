@@ -1,18 +1,18 @@
 # Build Windows
 
-Vmic targets Windows 10 version 1809 (build 17763) and later, plus Windows 11,
+Vmic targets Windows 10 version 1903 (build 18362) and later, plus Windows 11,
 on x64 machines. The graphical app and
 the diagnostic utility are self-contained after publication; only driver
 development needs Visual Studio, the Windows SDK, and the Windows Driver Kit.
 The preparation script uses a pinned pre-Windows-11 SYSVAD revision and emits
-model decorations for Windows 10 build 17763+. This avoids importing newer
+model decorations for Windows 10 build 18362+. This avoids importing newer
 kernel APIs from a Windows 11-oriented SYSVAD binary. When that pinned revision
 changes, the generated `.work` checkout is refreshed automatically.
 The preparation also suppresses only WDK warning C4996 for the pinned
 down-level pool API and applies Microsoft's removal of the obsolete APO
 `EmbedManifest=false` setting, allowing the older source to build with current
 WDK toolchains without changing its Windows runtime requirements. The build
-also fixes `_NT_TARGET_VERSION` to `NTDDI_WIN10_RS5` (Windows 10 version 1809),
+also fixes `_NT_TARGET_VERSION` to `NTDDI_WIN10_19H1` (Windows 10 version 1903),
 so the current WDK cannot select imports from its newest OS contract.
 
 ## One-time prerequisites
@@ -76,6 +76,6 @@ Microphone as its microphone.
   endpoints are active; send the result and the generated logs before changing
   the driver sources.
 - Device Manager code 39 with status `0xC0000263`: Windows could not resolve a
-  driver import. Confirm that the build prints `_NT_TARGET_VERSION=0x0A000006`,
+  driver import. Confirm that the build prints `_NT_TARGET_VERSION=0x0A000007`,
   then uninstall, rebuild, and reinstall; the installer includes the detailed
   PnP problem status in its error message.

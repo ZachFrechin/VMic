@@ -34,8 +34,8 @@ SYSVAD builds APO projects, so omitting those Visual Studio components produces
 for the exact component names.
 
 `Build-Driver.ps1` explicitly sets both `TargetVersion=Windows10` and
-`_NT_TARGET_VERSION=0x0A000006` (`NTDDI_WIN10_RS5`). This is the compile-time
-counterpart to the INF's Windows 10 build 17763 floor and prevents a current WDK
+`_NT_TARGET_VERSION=0x0A000007` (`NTDDI_WIN10_19H1`). This is the compile-time
+counterpart to the INF's Windows 10 build 18362 floor and prevents a current WDK
 from silently compiling the driver against its newest NTDDI contract.
 
 Run the complete build and installation flow from an elevated PowerShell:

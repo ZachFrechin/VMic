@@ -45,8 +45,8 @@ if (-not $msbuild) {
 }
 
 $solution = Join-Path $Worktree "audio/sysvad/sysvad.sln"
-$ntTargetVersion = "0x0A000006" # NTDDI_WIN10_RS5 / Windows 10 version 1809.
-Write-Host "Targeting Windows 10 version 1809 and later (_NT_TARGET_VERSION=$ntTargetVersion)."
+$ntTargetVersion = "0x0A000007" # NTDDI_WIN10_19H1 / Windows 10 version 1903.
+Write-Host "Targeting Windows 10 version 1903 and later (_NT_TARGET_VERSION=$ntTargetVersion)."
 & $msbuild $solution /m /t:Rebuild "/p:Configuration=$Configuration" "/p:Platform=x64" "/p:TargetVersion=Windows10" "/p:_NT_TARGET_VERSION=$ntTargetVersion"
 if ($LASTEXITCODE -ne 0) { throw "SYSVAD build failed." }
 
