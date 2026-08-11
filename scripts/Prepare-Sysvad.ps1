@@ -75,6 +75,47 @@ function Update-VmicInfTemplates {
     }
 }
 
+function Update-VmicBuildProjects {
+    param([string]$SysvadRoot)
+
+    # The pinned Windows 10-compatible sources intentionally use
+    # ExAllocatePoolWithTag. New WDK headers deprecate that API, while /WX in
+    # SYSVAD would otherwise turn the expected C4996 warning into an error.
+    $endpointsProject = Join-Path $SysvadRoot "EndpointsCommon/EndpointsCommon.vcxproj"
+    $text = [System.IO.File]::ReadAllText($endpointsProject)
+    if (-not $text.Contains('4996;%(DisableSpecificWarnings)')) {
+        $text = $text.Replace(
+            '4595;%(DisableSpecificWarnings)',
+            '4595;4996;%(DisableSpecificWarnings)')
+        [System.IO.File]::WriteAllText($endpointsProject, $text, [System.Text.Encoding]::UTF8)
+    }
+
+    $tabletProject = Join-Path $SysvadRoot "TabletAudioSample/TabletAudioSample.vcxproj"
+    $text = [System.IO.File]::ReadAllText($tabletProject)
+    if (-not $text.Contains('4996;%(DisableSpecificWarnings)')) {
+        $warningLevel = '      <WarningLevel>Level4</WarningLevel>'
+        $warningSuppression = '      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>'
+        $text = $text.Replace($warningLevel, $warningLevel + [Environment]::NewLine + $warningSuppression)
+        [System.IO.File]::WriteAllText($tabletProject, $text, [System.Text.Encoding]::UTF8)
+    }
+
+    # Modern MSBuild/WDK can crash the separate legacy mt.exe phase used when
+    # EmbedManifest=false. Microsoft removed this property from the same APO
+    # projects in windows-driver-samples commit 8785be3; use the modern default.
+    foreach ($relativePath in @(
+        "APO/DelayAPO/DelayAPO.vcxproj",
+        "APO/KWSApo/KWSApo.vcxproj",
+        "APO/SwapAPO/SwapAPO.vcxproj"
+    )) {
+        $project = Join-Path $SysvadRoot $relativePath
+        $text = [System.IO.File]::ReadAllText($project)
+        if ($text.Contains('<EmbedManifest>false</EmbedManifest>')) {
+            $text = $text.Replace('    <EmbedManifest>false</EmbedManifest>', '')
+            [System.IO.File]::WriteAllText($project, $text, [System.Text.Encoding]::UTF8)
+        }
+    }
+}
+
 $preparedMarker = Join-Path $Worktree ".vmic-prepared-$revision"
 if (Test-Path $Worktree) {
     $current = (git -C $Worktree rev-parse HEAD 2>$null).Trim()
@@ -82,7 +123,8 @@ if (Test-Path $Worktree) {
     if ($current -eq $revision -and (Test-Path $preparedMarker) -and -not $Force) {
         Sync-VmicBridgeSources $sysvad
         Update-VmicInfTemplates $sysvad
-        Write-Host "SYSVAD worktree already prepared; refreshed Vmic bridge sources and INF templates at $Worktree"
+        Update-VmicBuildProjects $sysvad
+        Write-Host "SYSVAD worktree already prepared; refreshed Vmic sources, INF templates, and build projects at $Worktree"
         exit 0
     }
     if ($current -eq $revision -and -not $Force) {
@@ -117,6 +159,7 @@ Sync-VmicBridgeSources $sysvad
 git -C $Worktree apply --check $patch
 git -C $Worktree apply $patch
 Update-VmicInfTemplates $sysvad
+Update-VmicBuildProjects $sysvad
 [System.IO.File]::WriteAllText($preparedMarker, $revision + [Environment]::NewLine, [System.Text.Encoding]::ASCII)
 
 Write-Host "Prepared SYSVAD revision $revision"

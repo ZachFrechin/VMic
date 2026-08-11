@@ -8,6 +8,10 @@ The preparation script uses a pinned pre-Windows-11 SYSVAD revision and emits
 model decorations for Windows 10 build 17763+. This avoids importing newer
 kernel APIs from a Windows 11-oriented SYSVAD binary. When that pinned revision
 changes, the generated `.work` checkout is refreshed automatically.
+The preparation also suppresses only WDK warning C4996 for the pinned
+down-level pool API and applies Microsoft's removal of the obsolete APO
+`EmbedManifest=false` setting, allowing the older source to build with current
+WDK toolchains without changing its Windows runtime requirements.
 
 ## One-time prerequisites
 
