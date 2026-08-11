@@ -43,7 +43,17 @@ if ($devgen) {
     if ($LASTEXITCODE -ne 0) { throw "DevGen could not create the root-enumerated Vmic Bridge device." }
 
     pnputil /add-driver $inf /install
-    if ($LASTEXITCODE -ne 0) { throw "PnPUtil could not install the Vmic Bridge driver package." }
+    $pnputilExitCode = $LASTEXITCODE
+    if ($pnputilExitCode -eq 3010) {
+        Write-Warning "Vmic Bridge was installed successfully and Windows must be restarted to finish installation."
+    }
+    elseif ($pnputilExitCode -eq 1641) {
+        Write-Host "Vmic Bridge was installed successfully and Windows is restarting."
+        exit 1641
+    }
+    elseif ($pnputilExitCode -ne 0) {
+        throw "PnPUtil could not install the Vmic Bridge driver package (exit code $pnputilExitCode). Check %windir%\inf\setupapi.dev.log."
+    }
 }
 else {
     if (-not $devcon) { throw "DevGen or DevCon x64 was not found. Install the Windows Driver Kit." }
