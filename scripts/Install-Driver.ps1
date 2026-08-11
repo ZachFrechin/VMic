@@ -19,14 +19,38 @@ if ($EnableTestSigning) {
 
 $inf = Join-Path $PackagePath "ComponentizedAudioSample.inf"
 if (-not (Test-Path $inf)) { throw "ComponentizedAudioSample.inf not found in $PackagePath" }
-$devcon = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\Tools" -Filter devcon.exe -File -Recurse -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -match "\\x64\\" } | Select-Object -First 1
-if (-not $devcon) { throw "DevCon x64 was not found. Install the Windows Driver Kit." }
 
-& $devcon.FullName remove "@ROOT\VmicBridge\*"
-pnputil /add-driver $inf
-if ($LASTEXITCODE -ne 0) { throw "PnPUtil could not add the driver package." }
-& $devcon.FullName install $inf "Root\VmicBridge"
-if ($LASTEXITCODE -ne 0) { throw "DevCon could not create the root-enumerated Vmic Bridge device." }
+function Find-WdkTool([string]$Name) {
+    Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\Tools" -Filter $Name -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match "\\x64\\" } |
+        Sort-Object FullName -Descending |
+        Select-Object -First 1
+}
+
+$devcon = Find-WdkTool "devcon.exe"
+$devgen = Find-WdkTool "devgen.exe"
+if ($devcon) {
+    # Removing a non-existent device returns a non-zero DevCon status, which is
+    # harmless here: the next step creates a fresh root-enumerated device.
+    & $devcon.FullName remove "@ROOT\VmicBridge\*"
+}
+
+if ($devgen) {
+    # Microsoft recommends DevGen + PnPUtil over DevCon install. DevCon's
+    # combined create/update operation can leave a created device behind when
+    # its update phase fails, as it did for the original installer flow.
+    & $devgen.FullName /add /bus ROOT /hardwareid "Root\VmicBridge"
+    if ($LASTEXITCODE -ne 0) { throw "DevGen could not create the root-enumerated Vmic Bridge device." }
+
+    pnputil /add-driver $inf /install
+    if ($LASTEXITCODE -ne 0) { throw "PnPUtil could not install the Vmic Bridge driver package." }
+}
+else {
+    if (-not $devcon) { throw "DevGen or DevCon x64 was not found. Install the Windows Driver Kit." }
+
+    Write-Warning "DevGen x64 was not found; falling back to DevCon install."
+    & $devcon.FullName install $inf "Root\VmicBridge"
+    if ($LASTEXITCODE -ne 0) { throw "DevCon could not create and install the root-enumerated Vmic Bridge device." }
+}
 
 Write-Host "Vmic Bridge installed. Run artifacts/diagnostics/Vmic.Diagnostics.exe bridge to verify render-to-capture."
