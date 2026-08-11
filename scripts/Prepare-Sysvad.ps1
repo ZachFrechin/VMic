@@ -78,6 +78,12 @@ function Update-VmicInfTemplates {
         }
         elseif ($name -eq "ComponentizedAudioSampleExtension.inx") {
             $text = $text.Replace('Root\sysvad_ComponentizedAudioSample', 'Root\VmicBridge')
+            # Windows composes endpoint names from the localized endpoint role
+            # and this adapter name, for example "Speakers (Vmic Bridge)".
+            $text = $text.Replace('SYSVAD (with APO Extensions)', 'Vmic Bridge')
+            if (-not $text.Contains('ExtendedFriendlyName = "Vmic Bridge"')) {
+                throw "Could not brand the Vmic Bridge extension friendly name in $inf."
+            }
         }
 
         [System.IO.File]::WriteAllText($inf, $text, $utf16)

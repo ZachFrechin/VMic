@@ -14,11 +14,12 @@ non-executable pool, rather than adding that newer import back into the binary.
 
 The preparation script clones that exact revision, initializes WIL, copies the
 Vmic ring-buffer sources into EndpointsCommon, applies the patch, and changes
-the componentized INF to expose:
+the componentized INF to expose one Vmic-branded render/capture pair. Windows
+localizes the endpoint role, so the visible names are typically:
 
-- Vmic Bridge Input — the render endpoint selected by VMic Host.
-- Vmic Bridge Microphone — the capture endpoint selected in Zoom, OBS, or
-  Discord.
+- `Speakers (Vmic Bridge)` — the render endpoint selected by VMic Host.
+- `External Microphone Headphone (Vmic Bridge)` — the capture endpoint selected
+  in Zoom, OBS, or Discord.
 
 When the pinned revision changes, the script replaces only its own generated
 `.work/windows-driver-samples` checkout. No manual worktree deletion is needed.

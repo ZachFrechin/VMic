@@ -56,9 +56,9 @@ checks that Windows registered the SYSVAD driver service before reporting
 success.
 
 The final command must report a passing network test and a passing bridge test.
-Then launch artifacts/app/Vmic.exe, select your real microphone as input and
-Vmic Bridge Input as Host output. Conferencing software must select Vmic Bridge
-Microphone as its microphone.
+Then launch artifacts/app/Vmic.exe, select your real microphone as input and the
+render endpoint ending in `(Vmic Bridge)` as Host output. Conferencing software
+must select the capture endpoint ending in `(Vmic Bridge)` as its microphone.
 
 ## If a build fails
 

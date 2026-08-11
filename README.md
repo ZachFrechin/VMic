@@ -93,12 +93,12 @@ dotnet test tests/Vmic.Core.Tests # runs all core tests (protocol, DSP, sessions
 1. On the Windows PC, follow [the build runbook](docs/WINDOWS-BUILD.md) to
    publish the app, build/install the test driver, and run the diagnostics.
 2. On the **Host PC**: run the app → **Host** → pick your mic and
-   "Vmic Bridge Input" as the output → **Start hosting**. Allow the firewall
-   prompt.
+   the render endpoint ending in "(Vmic Bridge)" as the output → **Start
+   hosting**. Allow the firewall prompt.
 3. On the **Client PC**: run the app → **Client** → pick your mic → select the
    discovered host (or type its IP) → **Connect**.
-4. In Zoom/OBS on the Host, choose **"Vmic Bridge Microphone"** as the
-   microphone.
+4. In Zoom/OBS on the Host, choose the capture endpoint ending in
+   **"(Vmic Bridge)"** as the microphone.
 
 > On a single Windows PC, run Vmic.Diagnostics.exe all to validate the loopback
 > Host/Client transport and virtual-cable bridge before an actual LAN test.
