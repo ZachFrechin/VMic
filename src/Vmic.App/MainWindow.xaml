@@ -66,11 +66,13 @@
 
         <!-- ============================ Host view ============================ -->
         <Grid Visibility="{Binding ShowHost, Converter={StaticResource BoolToVis}}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          DataContext="{Binding Host}">
                 <StackPanel Margin="24">
                     <Grid Margin="0,0,0,16">
                         <Button Content="← Back" Style="{StaticResource GhostButton}"
-                                Command="{Binding BackCommand}" HorizontalAlignment="Left" />
+                                Command="{Binding DataContext.BackCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                HorizontalAlignment="Left" />
                         <TextBlock Text="Host" FontSize="20" FontWeight="SemiBold"
                                    Foreground="{StaticResource App.Foreground}" HorizontalAlignment="Center" />
                     </Grid>
@@ -192,11 +194,13 @@
 
         <!-- ============================ Client view ========================== -->
         <Grid Visibility="{Binding ShowClient, Converter={StaticResource BoolToVis}}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          DataContext="{Binding Client}">
                 <StackPanel Margin="24">
                     <Grid Margin="0,0,0,16">
                         <Button Content="← Back" Style="{StaticResource GhostButton}"
-                                Command="{Binding BackCommand}" HorizontalAlignment="Left" />
+                                Command="{Binding DataContext.BackCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                HorizontalAlignment="Left" />
                         <TextBlock Text="Client" FontSize="20" FontWeight="SemiBold"
                                    Foreground="{StaticResource App.Foreground}" HorizontalAlignment="Center" />
                     </Grid>
