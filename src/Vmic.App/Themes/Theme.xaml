@@ -97,9 +97,35 @@
 
     <!-- =========================== Form controls ========================= -->
     <Style TargetType="ComboBox">
+        <Style.Resources>
+            <!-- The stock WPF popup otherwise keeps the Windows light
+                 WindowBrush while inheriting our light foreground. -->
+            <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#171A21" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#4F8CFF" />
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#FFFFFF" />
+        </Style.Resources>
         <Setter Property="Background" Value="{StaticResource App.Card}" />
         <Setter Property="Foreground" Value="{StaticResource App.Foreground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource App.Border}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Padding" Value="8,6" />
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Background" Value="{StaticResource App.Card}" />
+        <Setter Property="Foreground" Value="{StaticResource App.Foreground}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="8,6" />
+        <Style.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter Property="Background" Value="{StaticResource App.Accent}" />
+                <Setter Property="Foreground" Value="White" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource App.Accent}" />
+                <Setter Property="Foreground" Value="White" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="TextBox">

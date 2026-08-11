@@ -59,6 +59,11 @@ The final command must report a passing network test and a passing bridge test.
 Then launch artifacts/app/Vmic.exe, select your real microphone as input and the
 render endpoint ending in `(Vmic Bridge)` as Host output. Conferencing software
 must select the capture endpoint ending in `(Vmic Bridge)` as its microphone.
+On the first Host launch, click **Add Vmic firewall rule** and approve the UAC
+prompt. Vmic creates an inbound rule for that exact `Vmic.exe`, limited to the
+local subnet; allowing `Vmic.Diagnostics.exe` does not replace this rule. If the
+published app is moved to another directory, use the button again for its new
+path.
 
 ## If a build fails
 

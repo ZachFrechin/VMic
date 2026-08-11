@@ -77,11 +77,13 @@
 
                     <!-- Firewall hint -->
                     <Border Style="{StaticResource Card}" Margin="0,0,0,12"
-                            Visibility="{Binding ShowFirewallHint, Converter={StaticResource BoolToVis}}">
+                        Visibility="{Binding ShowFirewallHint, Converter={StaticResource BoolToVis}}">
                         <StackPanel>
                             <TextBlock Text="Windows Firewall must allow Vmic so clients can find and reach you."
                                        Style="{StaticResource HintText}" />
-                            <Button Content="Allow Vmic through Firewall" Style="{StaticResource GhostButton}"
+                            <TextBlock Text="Click below and approve the Windows administrator prompt; no manual Settings change is needed."
+                                       Style="{StaticResource HintText}" Margin="0,4,0,0" />
+                            <Button Content="Add Vmic firewall rule" Style="{StaticResource GhostButton}"
                                     Command="{Binding AddFirewallRuleCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" />
                         </StackPanel>
                     </Border>

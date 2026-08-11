@@ -104,16 +104,26 @@ public sealed class HostViewModel : ViewModelBase, IDisposable
         StartCommand = new RelayCommand(Start, () => !IsRunning);
         StopCommand = new RelayCommand(Stop, () => IsRunning);
         DisconnectClientCommand = new RelayCommand(p => { if (p is uint id) _session?.DisconnectClient(id); });
-        AddFirewallRuleCommand = new RelayCommand(() =>
-        {
-            if (FirewallHelper.AddRulesElevated()) ShowFirewallHint = false;
-        });
+        AddFirewallRuleCommand = new RelayCommand(AddFirewallRule);
 
         _meterTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
         _meterTimer.Tick += (_, _) => UpdateMeters();
 
         RefreshDevices();
         ShowFirewallHint = !FirewallHelper.IsRulePresent();
+    }
+
+    private void AddFirewallRule()
+    {
+        if (FirewallHelper.AddRulesElevated())
+        {
+            ShowFirewallHint = false;
+            StatusText = "Windows Firewall now allows Vmic on the local network.";
+        }
+        else
+        {
+            StatusText = "Could not add the firewall rule. Approve the Windows administrator prompt and try again.";
+        }
     }
 
     public void RefreshDevices()

@@ -1,26 +1,26 @@
 using System.Diagnostics;
-using Vmic.Core;
 
 namespace Vmic.App.Services;
 
 /// <summary>
-/// Manages the Windows Firewall inbound rules Vmic needs on the Host:
-/// UDP discovery + audio and TCP control. Adding rules requires elevation, so
-/// <see cref="AddRulesElevated"/> triggers a UAC prompt. All methods are
-/// best-effort no-ops off Windows.
+/// Manages the Windows Firewall inbound rule Vmic needs on the Host. The rule
+/// is bound to the current Vmic.exe and limited to the local subnet. Adding it
+/// requires elevation, so <see cref="AddRulesElevated"/> triggers a UAC prompt.
+/// All methods are best-effort no-ops off Windows.
 /// </summary>
 public static class FirewallHelper
 {
-    private const string UdpRuleName = "Vmic";
-    private const string TcpRuleName = "Vmic Control";
+    private const string RuleName = "Vmic";
 
     /// <summary>True if the Vmic inbound rules already exist.</summary>
     public static bool IsRulePresent()
     {
         if (!OperatingSystem.IsWindows()) return true;
+        string? executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath)) return false;
         try
         {
-            var psi = new ProcessStartInfo("netsh", $"advfirewall firewall show rule name=\"{UdpRuleName}\"")
+            var psi = new ProcessStartInfo("netsh", $"advfirewall firewall show rule name=\"{RuleName}\" verbose")
             {
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -30,7 +30,9 @@ public static class FirewallHelper
             if (process is null) return false;
             string output = process.StandardOutput.ReadToEnd();
             if (!process.WaitForExit(3000)) return false;
-            return process.ExitCode == 0 && output.Contains(UdpRuleName, StringComparison.OrdinalIgnoreCase);
+            return process.ExitCode == 0 &&
+                   output.Contains(RuleName, StringComparison.OrdinalIgnoreCase) &&
+                   output.Contains(executablePath, StringComparison.OrdinalIgnoreCase);
         }
         catch
         {
@@ -39,21 +41,21 @@ public static class FirewallHelper
     }
 
     /// <summary>
-    /// Adds the inbound rules (UDP discovery/audio + TCP control) with elevation.
+    /// Adds an inbound application rule for the current executable with elevation.
     /// Returns false if the user declined the UAC prompt.
     /// </summary>
     public static bool AddRulesElevated()
     {
         if (!OperatingSystem.IsWindows()) return false;
+        string? executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath) || executablePath.Contains('"')) return false;
         try
         {
-            string command =
-                $"netsh advfirewall firewall add rule name=\"{UdpRuleName}\" dir=in action=allow " +
-                $"protocol=UDP localport={Constants.DiscoveryPort},{Constants.AudioPort} enable=yes & " +
-                $"netsh advfirewall firewall add rule name=\"{TcpRuleName}\" dir=in action=allow " +
-                $"protocol=TCP localport={Constants.ControlPort} enable=yes";
+            string arguments =
+                $"advfirewall firewall add rule name=\"{RuleName}\" dir=in action=allow " +
+                $"program=\"{executablePath}\" enable=yes profile=any remoteip=localsubnet";
 
-            var psi = new ProcessStartInfo("cmd.exe", $"/c {command}")
+            var psi = new ProcessStartInfo("netsh.exe", arguments)
             {
                 UseShellExecute = true,
                 Verb = "runas", // triggers UAC
