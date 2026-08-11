@@ -41,14 +41,14 @@ function Update-VmicInfTemplates {
     param([string]$SysvadRoot)
 
     # The current upstream componentized sample restricts its models to Windows
-    # 11 build 22621 and newer. VMic is a Windows 10/11 x64 project, so generate
-    # undecorated NTAMD64 model sections from the maintained preparation step.
+    # 11 build 22621 and newer. VMic supports Windows 10 1809 (build 17763) and
+    # newer, which is also the minimum version required by its APO INF syntax.
     $templateDir = Join-Path $SysvadRoot "TabletAudioSample"
     $utf16 = [System.Text.Encoding]::Unicode
     foreach ($name in @("ComponentizedAudioSample.inx", "ComponentizedAudioSampleExtension.inx", "ComponentizedApoSample.inx")) {
         $inf = Join-Path $templateDir $name
         $text = [System.IO.File]::ReadAllText($inf, $utf16)
-        $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$')
+        $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$.10.0...17763')
 
         if ($name -eq "ComponentizedAudioSample.inx") {
             $text = $text.Replace('Root\sysvad_ComponentizedAudioSample', 'Root\VmicBridge')
