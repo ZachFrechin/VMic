@@ -17,6 +17,12 @@ The patch limits SYSVAD to one render and one capture endpoint. Render DMA is
 written to the shared non-paged ring; capture DMA reads the same ring and emits
 silence on underrun. This is the only data path required for a virtual cable.
 
+Before building, install the matching Windows SDK/WDK plus the active v145
+toolset's x64/x86 Spectre libraries, ATL, and ATL with Spectre mitigations.
+SYSVAD builds APO projects, so omitting those Visual Studio components produces
+`atlbase.h` or `MSB8040` failures. See [the Windows build runbook](WINDOWS-BUILD.md)
+for the exact component names.
+
 Run the complete build and installation flow from an elevated PowerShell:
 
 ~~~powershell

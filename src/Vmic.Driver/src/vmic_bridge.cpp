@@ -54,7 +54,7 @@ VmicBridgeDestroy(
 VOID
 VmicBridgeWrite(
     _Inout_                PVMIC_BRIDGE Bridge,
-    _In_reads_(Size) const BYTE*        Data,
+    _In_reads_(Size) const UCHAR*       Data,
     _In_                   ULONG        Size)
 {
     if (!Bridge->Initialized || Size == 0)
@@ -95,7 +95,7 @@ VmicBridgeWrite(
 VOID
 VmicBridgeRead(
     _Inout_            PVMIC_BRIDGE Bridge,
-    _Out_writes_(Size) BYTE*        Data,
+    _Out_writes_(Size) UCHAR*       Data,
     _In_               ULONG        Size)
 {
     if (Size == 0)

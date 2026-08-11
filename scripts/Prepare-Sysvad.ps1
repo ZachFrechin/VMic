@@ -20,11 +20,29 @@ function Require-Command([string]$Name) {
 }
 
 Require-Command git
+$sysvad = Join-Path $Worktree "audio/sysvad"
+
+function Sync-VmicBridgeSources {
+    param([string]$SysvadRoot)
+
+    # These two files are maintained in this repository. The SYSVAD checkout is
+    # generated under .work, so refresh them on every run instead of treating a
+    # preparation marker as proof that their contents are still current.
+    $endpointsCommon = Join-Path $SysvadRoot "EndpointsCommon"
+    if (-not (Test-Path $endpointsCommon)) {
+        throw "Prepared SYSVAD directory is missing: $endpointsCommon"
+    }
+
+    Copy-Item -Force (Join-Path $bridgeDir "vmic_bridge.h") (Join-Path $endpointsCommon "vmic_bridge.h")
+    Copy-Item -Force (Join-Path $bridgeDir "vmic_bridge.cpp") (Join-Path $endpointsCommon "vmic_bridge.cpp")
+}
+
 $preparedMarker = Join-Path $Worktree ".vmic-prepared-$revision"
 if (Test-Path $Worktree) {
     $current = (git -C $Worktree rev-parse HEAD 2>$null).Trim()
     if ($current -eq $revision -and (Test-Path $preparedMarker) -and -not $Force) {
-        Write-Host "SYSVAD worktree already prepared at $Worktree"
+        Sync-VmicBridgeSources $sysvad
+        Write-Host "SYSVAD worktree already prepared; refreshed Vmic bridge sources at $Worktree"
         exit 0
     }
     if ($current -eq $revision -and -not $Force) {
@@ -49,9 +67,7 @@ if (-not (Test-Path $Worktree)) {
     git -C $Worktree submodule update --init wil
 }
 
-$sysvad = Join-Path $Worktree "audio/sysvad"
-Copy-Item (Join-Path $bridgeDir "vmic_bridge.h") (Join-Path $sysvad "EndpointsCommon/vmic_bridge.h")
-Copy-Item (Join-Path $bridgeDir "vmic_bridge.cpp") (Join-Path $sysvad "EndpointsCommon/vmic_bridge.cpp")
+Sync-VmicBridgeSources $sysvad
 git -C $Worktree apply --check $patch
 git -C $Worktree apply $patch
 

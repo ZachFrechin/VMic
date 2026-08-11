@@ -6,10 +6,20 @@ development needs Visual Studio, the Windows SDK, and the Windows Driver Kit.
 
 ## One-time prerequisites
 
-Install Git for Windows, .NET SDK 10, Visual Studio 2022 Community or Build
-Tools with the Desktop development with C++ workload, the Windows 10/11 SDK,
-and the matching Windows Driver Kit. The official SYSVAD instructions also
-require the WIL submodule; Prepare-Sysvad.ps1 retrieves it automatically.
+Install Git for Windows, .NET SDK 10, a supported Visual Studio C++ toolchain,
+the Windows 10/11 SDK, and the matching Windows Driver Kit. In **Visual Studio
+Installer → Modify → Individual components**, make sure these driver-build
+components are installed for the active v145 toolset:
+
+- **MSVC v145 C++ x64/x86 Spectre-mitigated libs**
+- **C++ ATL for latest v145 build tools (x86 & x64)**
+- **C++ ATL for latest v145 build tools with Spectre Mitigations (x86 & x64)**
+
+The SYSVAD solution also builds APO projects. ATL supplies `atlbase.h`; the
+Spectre libraries are required by the WDK build configuration. Missing either
+causes errors such as `atlbase.h` not found or `MSB8040`; they cannot be fixed
+from the Vmic source tree. The official SYSVAD instructions also require the
+WIL submodule; `Prepare-Sysvad.ps1` retrieves it automatically.
 
 Open an elevated PowerShell in the repository and activate Windows test-signing:
 

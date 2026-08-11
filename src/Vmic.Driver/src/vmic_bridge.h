@@ -46,7 +46,7 @@ VmicBridgeDestroy(
 VOID
 VmicBridgeWrite(
     _Inout_                PVMIC_BRIDGE Bridge,
-    _In_reads_(Size) const BYTE*        Data,
+    _In_reads_(Size) const UCHAR*       Data,
     _In_                   ULONG        Size);
 
 // Consumer (capture stream): copies samples out of the ring, padding with silence
@@ -54,7 +54,7 @@ VmicBridgeWrite(
 VOID
 VmicBridgeRead(
     _Inout_                 PVMIC_BRIDGE Bridge,
-    _Out_writes_(Size)      BYTE*        Data,
+    _Out_writes_(Size)      UCHAR*       Data,
     _In_                    ULONG        Size);
 
 // Single instance shared by both streams; defined in vmic_bridge.cpp.
