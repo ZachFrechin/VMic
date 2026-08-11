@@ -37,12 +37,40 @@ function Sync-VmicBridgeSources {
     Copy-Item -Force (Join-Path $bridgeDir "vmic_bridge.cpp") (Join-Path $endpointsCommon "vmic_bridge.cpp")
 }
 
+function Update-VmicInfTemplates {
+    param([string]$SysvadRoot)
+
+    # The current upstream componentized sample restricts its models to Windows
+    # 11 build 22621 and newer. VMic is a Windows 10/11 x64 project, so generate
+    # undecorated NTAMD64 model sections from the maintained preparation step.
+    $templateDir = Join-Path $SysvadRoot "TabletAudioSample"
+    $utf16 = [System.Text.Encoding]::Unicode
+    foreach ($name in @("ComponentizedAudioSample.inx", "ComponentizedAudioSampleExtension.inx", "ComponentizedApoSample.inx")) {
+        $inf = Join-Path $templateDir $name
+        $text = [System.IO.File]::ReadAllText($inf, $utf16)
+        $text = $text.Replace('NT$ARCH$.10.0...22621', 'NT$ARCH$')
+
+        if ($name -eq "ComponentizedAudioSample.inx") {
+            $text = $text.Replace('Root\sysvad_ComponentizedAudioSample', 'Root\VmicBridge')
+            $text = $text.Replace('Virtual Audio Device (WDM) - Tablet Sample', 'Vmic Bridge Virtual Audio Device')
+            $text = $text.Replace('SYSVAD Wave Speaker', 'Vmic Bridge Input')
+            $text = $text.Replace('SYSVAD Wave Microphone Headphone', 'Vmic Bridge Microphone')
+        }
+        elseif ($name -eq "ComponentizedAudioSampleExtension.inx") {
+            $text = $text.Replace('Root\sysvad_ComponentizedAudioSample', 'Root\VmicBridge')
+        }
+
+        [System.IO.File]::WriteAllText($inf, $text, $utf16)
+    }
+}
+
 $preparedMarker = Join-Path $Worktree ".vmic-prepared-$revision"
 if (Test-Path $Worktree) {
     $current = (git -C $Worktree rev-parse HEAD 2>$null).Trim()
     if ($current -eq $revision -and (Test-Path $preparedMarker) -and -not $Force) {
         Sync-VmicBridgeSources $sysvad
-        Write-Host "SYSVAD worktree already prepared; refreshed Vmic bridge sources at $Worktree"
+        Update-VmicInfTemplates $sysvad
+        Write-Host "SYSVAD worktree already prepared; refreshed Vmic bridge sources and INF templates at $Worktree"
         exit 0
     }
     if ($current -eq $revision -and -not $Force) {
@@ -70,17 +98,7 @@ if (-not (Test-Path $Worktree)) {
 Sync-VmicBridgeSources $sysvad
 git -C $Worktree apply --check $patch
 git -C $Worktree apply $patch
-
-# ComponentizedAudioSample.inx is UTF-16LE. .NET APIs work in both Windows
-# PowerShell 5.1 and PowerShell 7, unlike the Encoding parameter on old hosts.
-$inf = Join-Path $sysvad "TabletAudioSample/ComponentizedAudioSample.inx"
-$utf16 = [System.Text.Encoding]::Unicode
-$text = [System.IO.File]::ReadAllText($inf, $utf16)
-$text = $text.Replace('Root\sysvad_ComponentizedAudioSample', 'Root\VmicBridge')
-$text = $text.Replace('Virtual Audio Device (WDM) - Tablet Sample', 'Vmic Bridge Virtual Audio Device')
-$text = $text.Replace('SYSVAD Wave Speaker', 'Vmic Bridge Input')
-$text = $text.Replace('SYSVAD Wave Microphone Headphone', 'Vmic Bridge Microphone')
-[System.IO.File]::WriteAllText($inf, $text, $utf16)
+Update-VmicInfTemplates $sysvad
 [System.IO.File]::WriteAllText($preparedMarker, $revision + [Environment]::NewLine, [System.Text.Encoding]::ASCII)
 
 Write-Host "Prepared SYSVAD revision $revision"

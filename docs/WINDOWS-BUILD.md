@@ -3,6 +3,9 @@
 Vmic targets Windows 10 and Windows 11 on x64 machines. The graphical app and
 the diagnostic utility are self-contained after publication; only driver
 development needs Visual Studio, the Windows SDK, and the Windows Driver Kit.
+The preparation script converts the upstream SYSVAD model decorations from
+Windows 11 build 22621+ to generic x64 Windows model sections before building,
+so the generated test driver can be selected on Windows 10 too.
 
 ## One-time prerequisites
 
